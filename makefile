@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=
 
-main: main.o inputbuffer.o metacommand.o row.o table.o statement.o
+db: main.o inputbuffer.o metacommand.o row.o table.o statement.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 main.o: main.c
@@ -24,4 +24,4 @@ statement.o: statement.c
 
 .PHONY: clean
 clean:
-	-rm *.o ./main
+	-rm *.o ./db
