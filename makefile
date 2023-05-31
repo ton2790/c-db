@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=
 
-db: main.o inputbuffer.o metacommand.o row.o table.o statement.o
+db: main.o inputbuffer.o metacommand.o row.o table.o statement.o pager.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 main.o: main.c
@@ -22,6 +22,9 @@ table.o: table.c
 statement.o: statement.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+pager.o: pager.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 .PHONY: clean
 clean:
-	-rm *.o ./db
+	-rm *.o ./db ./mydb.db
