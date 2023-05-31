@@ -2,8 +2,10 @@
 #define METACOMMAND_H
 
 #include <string.h>
+#include <stdint.h>
 #include "inputbuffer.h"
 #include "table.h"
+#include "btree.h"
 
 typedef enum MetaCommandResult {
   META_COMMAND_SUCCESS,

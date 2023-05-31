@@ -6,6 +6,7 @@
 #include "row.h"
 #include "table.h"
 #include "cursor.h"
+#include "btree.h"
 
 typedef enum PrepareResult {
   PREPARE_SUCCESS,
