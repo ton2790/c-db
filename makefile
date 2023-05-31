@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=
+CFLAGS=-g
 
 db: main.o inputbuffer.o metacommand.o row.o table.o statement.o pager.o cursor.o btree.o
 	$(CC) $(CFLAGS) -o $@ $^
