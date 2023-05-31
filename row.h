@@ -20,9 +20,8 @@ typedef struct Row {
 #define EMAIL_SIZE SIZE_OF_ATTRIBUTE(Row, email)
 #define ROW_SIZE (ID_SIZE + USERNAME_SIZE + EMAIL_SIZE)
 #define ID_OFFSET 0
-#define USERNAME_OFFSET (ID_OFFSET + USERNAME_SIZE)
-#define EMAIL_OFFSET (ID_OFFSET + EMAIL_SIZE)
-
+#define USERNAME_OFFSET (ID_OFFSET + ID_SIZE)
+#define EMAIL_OFFSET (ID_OFFSET + USERNAME_SIZE)
 
 void print_row(Row *row);
 void serialize_row(Row *source, void *destination);

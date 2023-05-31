@@ -5,6 +5,7 @@
 #include "inputbuffer.h"
 #include "row.h"
 #include "table.h"
+#include "cursor.h"
 
 typedef enum PrepareResult {
   PREPARE_SUCCESS,

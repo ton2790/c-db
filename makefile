@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=
 
-db: main.o inputbuffer.o metacommand.o row.o table.o statement.o pager.o
+db: main.o inputbuffer.o metacommand.o row.o table.o statement.o pager.o cursor.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 main.o: main.c
@@ -23,6 +23,9 @@ statement.o: statement.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 pager.o: pager.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+cursor.o: cursor.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 .PHONY: clean
