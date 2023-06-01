@@ -50,7 +50,8 @@
 #define INTERNAL_NODE_CHILD_SIZE (sizeof(uint32_t))
 #define INTERNAL_NODE_CELL_SIZE (INTERNAL_NODE_KEY_SIZE + INTERNAL_NODE_CHILD_SIZE)
 #define INTERNAL_NODE_SPACE_FOR_CELLS (PAGE_SIZE - INTERNAL_NODE_HEADER_SIZE)
-#define INTERNAL_NODE_MAX_CELLS (INTERNAL_NODE_SPACE_FOR_CELLS / INTERNAL_NODE_CELL_SIZE)
+#define INTERNAL_NODE_MAX_KEYS (INTERNAL_NODE_SPACE_FOR_CELLS / INTERNAL_NODE_CELL_SIZE)
+
 
 typedef enum NodeType {
   NODE_INTERNAL,
@@ -74,5 +75,9 @@ uint32_t get_node_max_key(void* node);
 bool is_node_root(void* node);
 void set_node_root(void* node, bool is_root);
 void initialize_internal_node(void* node);
+uint32_t *node_parent(void *node);
+void update_internal_node_key(void *node, uint32_t old_key, uint32_t new_key);
+uint32_t internal_node_find_child(void *parent, uint32_t key);
 
 #endif
+
