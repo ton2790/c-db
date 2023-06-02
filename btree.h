@@ -4,10 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include "pager.h"
 #include "row.h"
-
-#define PAGE_SIZE 4096
-#define TABLE_MAX_PAGES 100
 
 /* Common Node header layout */
 #define NODE_TYPE_SIZE (sizeof(uint8_t))
@@ -50,7 +48,10 @@
 #define INTERNAL_NODE_CHILD_SIZE (sizeof(uint32_t))
 #define INTERNAL_NODE_CELL_SIZE (INTERNAL_NODE_KEY_SIZE + INTERNAL_NODE_CHILD_SIZE)
 #define INTERNAL_NODE_SPACE_FOR_CELLS (PAGE_SIZE - INTERNAL_NODE_HEADER_SIZE)
-#define INTERNAL_NODE_MAX_KEYS (INTERNAL_NODE_SPACE_FOR_CELLS / INTERNAL_NODE_CELL_SIZE)
+//#define INTERNAL_NODE_MAX_KEYS (INTERNAL_NODE_SPACE_FOR_CELLS / INTERNAL_NODE_CELL_SIZE)
+#define INTERNAL_NODE_MAX_KEYS 3
+
+#define INVALID_PAGE_NUM UINT32_MAX
 
 
 typedef enum NodeType {
@@ -71,7 +72,7 @@ uint32_t* internal_node_right_child(void* node);
 uint32_t* internal_node_cell(void* node, uint32_t cell_num);
 uint32_t* internal_node_child(void* node, uint32_t child_num);
 uint32_t* internal_node_key(void* node, uint32_t key_num);
-uint32_t get_node_max_key(void* node);
+uint32_t get_node_max_key(Pager *pager, void* node);
 bool is_node_root(void* node);
 void set_node_root(void* node, bool is_root);
 void initialize_internal_node(void* node);

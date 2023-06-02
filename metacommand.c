@@ -35,14 +35,16 @@ void print_tree(Pager *pager, uint32_t page_num, uint32_t indentation_level)
     num_keys = *internal_node_num_keys(node);
     indent(indentation_level);
     printf("- internal (size %d)\n", num_keys);
-    for (uint32_t i = 0; i < num_keys; i++) {
-      child = *internal_node_child(node, i);
+    if (num_keys > 0) {
+      for (uint32_t i = 0; i < num_keys; i++) {
+	child = *internal_node_child(node, i);
+	print_tree(pager, child, indentation_level + 1);
+	indent(indentation_level + 1);
+	printf("- key %d\n", *internal_node_key(node, i));
+      }
+      child = *internal_node_right_child(node);
       print_tree(pager, child, indentation_level + 1);
-      indent(indentation_level + 1);
-      printf("- key %d\n", *internal_node_key(node, i));
     }
-    child = *internal_node_right_child(node);
-    print_tree(pager, child, indentation_level + 1);
     break;
   }
 }

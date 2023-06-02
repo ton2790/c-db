@@ -8,7 +8,9 @@
 #include <unistd.h>
 #include <stdint.h>
 #include "row.h"
-#include "btree.h"
+
+#define PAGE_SIZE 4096
+#define TABLE_MAX_PAGES 1000
 
 typedef struct Pager {
   int file_descriptor;

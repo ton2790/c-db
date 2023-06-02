@@ -39,6 +39,10 @@ PrepareResult prepare_statement(InputBuffer *input_buffer, Statement *statement)
   return PREPARE_UNRECOGNISED_STATEMENT;
 }
 
+void internal_node_split_and_insert(Table *table,
+				    uint32_t parent_page_num,
+				    uint32_t child_page_num);
+
 void internal_node_insert(Table *table,
 			  uint32_t parent_page_num,
 			  uint32_t child_page_num)
@@ -46,19 +50,24 @@ void internal_node_insert(Table *table,
   Pager *pager = table->pager;
   void *parent = get_page(pager, parent_page_num);
   void *child = get_page(pager, child_page_num);
-  uint32_t child_max_key = get_node_max_key(child);
+  uint32_t child_max_key = get_node_max_key(pager, child);
   uint32_t index = internal_node_find_child(parent, child_max_key);
   uint32_t original_num_keys = *internal_node_num_keys(parent);
   if (original_num_keys >= INTERNAL_NODE_MAX_KEYS) {
-    printf("Unimplemented: splitting internal node\n");
-    exit(EXIT_FAILURE);
+    internal_node_split_and_insert(table, parent_page_num, child_page_num);
+    return;
   }
-  *internal_node_num_keys(parent) = original_num_keys + 1;
   uint32_t right_child_page_num = *internal_node_right_child(parent);
+  if (right_child_page_num == INVALID_PAGE_NUM) {
+    *internal_node_right_child(parent) = child_page_num;
+    return;
+  }
   void *right_child = get_page(pager, right_child_page_num);
-  if (child_max_key > get_node_max_key(right_child)) {
+  *internal_node_num_keys(parent) = original_num_keys + 1;
+  if (child_max_key > get_node_max_key(pager, right_child)) {
     *internal_node_child(parent, original_num_keys) = right_child_page_num;
-    *internal_node_key(parent, original_num_keys) = get_node_max_key(right_child);
+    *internal_node_key(parent, original_num_keys) =
+      get_node_max_key(pager, right_child);
     *internal_node_right_child(parent) = child_page_num;
   } else {
     for (uint32_t i = original_num_keys; i > index; i--) {
@@ -71,11 +80,62 @@ void internal_node_insert(Table *table,
   }
 }
 
+void internal_node_split_and_insert(Table *table,
+				    uint32_t parent_page_num,
+				    uint32_t child_page_num)
+{
+  Pager *pager = table->pager;
+  uint32_t old_page_num = parent_page_num;
+  void *old_node = get_page(pager, old_page_num);
+  uint32_t old_max = get_node_max_key(pager, old_node);
+  void *child = get_page(pager, child_page_num);
+  uint32_t child_max = get_node_max_key(pager, child);
+  uint32_t new_page_num = get_unused_page_num(pager);
+  uint32_t splitting_root = is_node_root(old_node);
+  void *parent;
+  void *new_node;
+  if (splitting_root) {
+    create_new_root(table, new_page_num);
+    parent = get_page(pager, table->root_page_num);
+    old_page_num = *internal_node_child(parent, 0);
+    old_node = get_page(pager, old_page_num);
+  } else {
+    parent = get_page(pager, *node_parent(old_node));
+    new_node = get_page(pager, new_page_num);
+    initialize_internal_node(new_node);
+  }
+  uint32_t *old_num_keys = internal_node_num_keys(old_node);
+  uint32_t cur_page_num = *internal_node_right_child(old_node);
+  void *cur = get_page(pager, cur_page_num);
+  internal_node_insert(table, new_page_num, cur_page_num);
+  *node_parent(cur) = new_page_num;
+  *internal_node_right_child(old_node) = INVALID_PAGE_NUM;
+  for (int i = INTERNAL_NODE_MAX_KEYS - 1; i > INTERNAL_NODE_MAX_KEYS / 2; i--) {
+    cur_page_num = *internal_node_child(old_node, i);
+    cur = get_page(pager, cur_page_num);
+    internal_node_insert(table,  new_page_num, cur_page_num);
+    *node_parent(cur) = new_page_num;
+    (*old_num_keys)--;
+  }
+  *internal_node_right_child(old_node)
+    = *internal_node_child(old_node, *old_num_keys - 1);
+  (*old_num_keys)--;
+  uint32_t max_after_split = get_node_max_key(pager, old_node);
+  uint32_t destination_page_num
+    = child_max < max_after_split ? old_page_num : new_page_num;
+  internal_node_insert(table, destination_page_num, child_page_num);
+  update_internal_node_key(parent, old_max, get_node_max_key(pager, old_node));
+  if (!splitting_root) {
+    internal_node_insert(table, *node_parent(old_node), new_page_num);
+    *node_parent(new_node) = *node_parent(old_node);
+  }
+}
+
 void leaf_node_split_and_insert(Cursor *cursor, uint32_t key, Row *value)
 {
   Pager *pager = cursor->table->pager;
   void *old_node = get_page(pager, cursor->page_num);
-  uint32_t old_max = get_node_max_key(old_node);
+  uint32_t old_max = get_node_max_key(pager, old_node);
   uint32_t new_page_num = get_unused_page_num(pager);
   void *new_node = get_page(pager, new_page_num);
   initialize_leaf_node(new_node);
@@ -106,7 +166,7 @@ void leaf_node_split_and_insert(Cursor *cursor, uint32_t key, Row *value)
     create_new_root(cursor->table, new_page_num);
   } else {
     uint32_t parent_page_num = *node_parent(old_node);
-    uint32_t new_max = get_node_max_key(old_node);
+    uint32_t new_max = get_node_max_key(pager, old_node);
     void *parent = get_page(pager, parent_page_num);
     update_internal_node_key(parent, old_max, new_max);
     internal_node_insert(cursor->table, parent_page_num, new_page_num);

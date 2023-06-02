@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "row.h"
 #include "pager.h"
+#include "btree.h"
 
 typedef struct Table {
   Pager *pager;
